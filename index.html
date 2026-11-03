@@ -413,7 +413,7 @@ function head(t,meta,acts){return `<div class="ph"><button class="btn btn-g" dat
 function metaVenta(){const d=S.data;return d?`Venta al ${fCorta(d.ventaAl)} · Actualizado ${fHora(d.actualizado)}`:'Todavía no se cargó la base';}
 /* ---------- HOME ---------- */
 function tile(go,ic,col,t,s){return `<button class="tile" data-go="${go}"><div class="blob" style="background:${col}"></div><div class="ic" style="background:${col}">${ic}</div><h3>${t}</h3><p>${s}</p><span class="arr" style="color:${col}">→</span></button>`;}
-function vHome(){return `<div class="top">${brand()}<div class="hello"><b>¡Hola!</b> 🍺 ¿Qué vamos a mover hoy?</div></div>
+function vHome(){return `<div class="top">${brand()}<div class="hello"><b>¡Hola!</b> 🍺 ¿Qué vamos a ver hoy?</div></div>
  <div class="sect">OBJETIVOS</div><div class="grid3">
   ${tile('grillas','G','#8fd3ff','Grillas','Focos por cliente y vendedor')}
   ${tile('obj','O','#ffd35c','Objetivos del mes','Volumen Total CZA y Above Core')}</div>
