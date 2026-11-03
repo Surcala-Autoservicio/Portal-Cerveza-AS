@@ -291,7 +291,7 @@ function procesar(sheets,ventaAl){
     const vend=String(r[cV]||'').trim();const vk=nk(vend);if(!vk)continue;
     vendSet[vk]=vendSet[vk]||vend; if(cS>=0&&r[cS])sup[String(r[cS]).trim()]=(sup[String(r[cS]).trim()]||0)+1;
     if(!(esCZA||esAC))continue;
-    const hl=numv(r[cHL]),bu=numv(r[cB]);const seg=nk(cSeg>=0?r[cSeg]:'');
+    const hl=numv(r[cHL]),bu=numv(r[cB]);let seg=nk(cSeg>=0&&typeof r[cSeg]==='string'?r[cSeg]:'');if(seg.startsWith('#'))seg='';
     if(esCZA)totHL[vk]=(totHL[vk]||0)+hl; if(esAC)acHL[vk]=(acHL[vk]||0)+hl;
     const prod=String(r[cN]||'').trim();if(seg&&seg!=='0')segProd[nk(prod)]=seg;
     if(esAC)segProd[nk(prod)]='ABOVE CORE';
@@ -310,14 +310,30 @@ function procesar(sheets,ventaAl){
   const VO=buscarHoja(sheets,h=>h.includes('VENDEDOR')&&h.includes('OBJETIVO'));
   const vol={};
   if(VO){const hh=VO.hdr;const cg=col(hh,'GRUPO DE PRODUCTOS','GRUPO PRODUCTOS'),cv=hh.indexOf('VENDEDOR');
-    const objs=hh.map((x,i)=>x==='OBJETIVO'?i:-1).filter(i=>i>=0);const co=objs[objs.length-1];
-    const cva=col(hh,'VENTA ACUMULADA','VENTA'),cm=col(hh,'MEDIA NECESARIA');
-    let grp='';
+    /* Filas de vendedores (sin totales) */
+    const filas=[];let grp='';
     for(let i=VO.h+1;i<VO.rows.length;i++){const r=VO.rows[i]||[];if(cg>=0&&r[cg])grp=nk(r[cg]);
       const vend=String(r[cv]||'').trim();const vk=nk(vend);if(!vk||vk.startsWith('TOTAL'))continue;
-      const t=grp.includes('ABOVE')?'A':(grp.includes('CERVEZA')?'T':null);if(!t)continue;
-      vendSet[vk]=vendSet[vk]||vend;
-      const o=vol[vk]||(vol[vk]={});o['obj'+t]=numv(r[co]);o['vs'+t]=numv(r[cva]);o['med'+t]=cm>=0?numv(r[cm]):null;}
+      const t=grp.includes('ABOVE')?'A':(grp.includes('CERVEZA')?'T':null);if(!t)continue;filas.push({r,vend,vk,t});}
+    /* Columnas numéricas a la derecha del vendedor */
+    const nc=Math.max(...VO.rows.slice(VO.h,VO.h+40).map(r=>(r||[]).length),hh.length);
+    const cand=[];for(let j=cv+1;j<nc;j++){if(filas.some(f=>typeof f.r[j]==='number'))cand.push(j);}
+    const objs=hh.map((x,i)=>x==='OBJETIVO'?i:-1).filter(i=>i>=0);
+    /* La columna de venta se detecta comparando con la venta real de la hoja de Venta
+       (los encabezados de esta hoja a veces vienen corridos) */
+    let cva=-1,best=0;
+    cand.forEach(j=>{let ok=0,n=0;filas.forEach(f=>{const real=f.t==='A'?acHL[f.vk]:totHL[f.vk];if(real==null)return;n++;
+      const x=numv(f.r[j]);if(Math.abs(x-real)<=Math.max(0.05,real*0.005))ok++;});
+      const sc=n?ok/n:0;if(sc>best){best=sc;cva=j;}});
+    if(best<0.5)cva=col(hh,'VENTA ACUMULADA','VENTA');
+    /* Objetivo: la columna "Objetivo" que no es la venta (la más cercana antes de la venta) */
+    let co=-1;const objOk=objs.filter(j=>j!==cva);
+    if(objOk.length){const antes=objOk.filter(j=>cva<0||j<cva);co=antes.length?antes[antes.length-1]:objOk[0];}
+    if(co<0){const ant=cand.filter(j=>j<cva);co=ant.length?ant[ant.length-1]:(cand[0]??-1);}
+    if(co===cva)out.avisos.push('Revisá la hoja "Volumen": no pude separar Objetivo de Venta.');
+    const cm=col(hh,'MEDIA NECESARIA');
+    filas.forEach(f=>{vendSet[f.vk]=vendSet[f.vk]||f.vend;
+      const o=vol[f.vk]||(vol[f.vk]={});o['obj'+f.t]=co>=0?numv(f.r[co]):0;o['vs'+f.t]=cva>=0?numv(f.r[cva]):0;o['med'+f.t]=cm>=0?numv(f.r[cm]):null;});
   } else out.avisos.push('No encontré la hoja "Volumen" con los objetivos.');
   /* ---- Maestro ---- */
   const M=buscarHoja(sheets,h=>h.includes('RAZON SOCIAL')&&h.some(x=>x.includes('PERSONAL COMERCIAL')));
@@ -455,7 +471,7 @@ function vHome(){return `<div class="top">${brand()}<div class="hello"><b>¡Hola
   ${tile('ptc','$','#7ee2a8','PTC','Precio al consumidor · Cerveza')}
   ${tile('ptr','%','#5fe0d6','PTR','Precio al retail · Cerveza')}</div>
  <div class="sect">PRODUCTO</div><div class="grid3">
-  ${tile('fres','F','#9cc2ff','Frescura','Vencimientos de lote y faltantes de stock')}</div><p style="margin-top:34px;font-size:12px;font-weight:700;color:var(--bgtxt);opacity:.7">Versión 6 · Cerveza dorada</p>`;}
+  ${tile('fres','F','#9cc2ff','Frescura','Vencimientos de lote y faltantes de stock')}</div><p style="margin-top:34px;font-size:12px;font-weight:700;color:var(--bgtxt);opacity:.7">Versión 7 · Cerveza dorada</p>`;}
 /* ---------- GRILLAS ---------- */
 function filtrarBase(){const g=S.g,q=g.q.trim().toUpperCase();
   return (S.data?S.data.clientes:[]).filter(c=>(!g.vend||c.v===g.vend)&&(!g.frec||c.f===g.frec)&&(!q||c.c.includes(q)||c.rs.toUpperCase().includes(q)));}
