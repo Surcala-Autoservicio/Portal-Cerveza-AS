@@ -89,7 +89,7 @@ button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 .pill.on{background:var(--sky);color:#062a63;border-color:var(--sky)}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
 .filters select,.filters input{width:100%;background:var(--card);border:1px solid var(--line-2);border-radius:14px;padding:13px 14px;font-weight:700;outline:none;min-width:0}
-.filters select option{color:#0a2a5c}
+.filters select option{background:#ffffff;color:#0a2f6e;font-weight:600}.filters select option:checked{background:#dbeeff;color:#0a2f6e}
 .filters input::placeholder{color:var(--ink-3);font-weight:500}
 .filters .on{border-color:var(--sky);box-shadow:0 0 0 2px rgba(143,211,255,.25)}
 /* ---------- KPI ---------- */
@@ -455,7 +455,7 @@ function vHome(){return `<div class="top">${brand()}<div class="hello"><b>¡Hola
   ${tile('ptc','$','#7ee2a8','PTC','Precio al consumidor · Cerveza')}
   ${tile('ptr','%','#5fe0d6','PTR','Precio al retail · Cerveza')}</div>
  <div class="sect">PRODUCTO</div><div class="grid3">
-  ${tile('fres','F','#9cc2ff','Frescura','Vencimientos de lote y faltantes de stock')}</div>`;}
+  ${tile('fres','F','#9cc2ff','Frescura','Vencimientos de lote y faltantes de stock')}</div><p style="margin-top:34px;font-size:12px;font-weight:700;color:var(--bgtxt);opacity:.7">Versión 6 · Cerveza dorada</p>`;}
 /* ---------- GRILLAS ---------- */
 function filtrarBase(){const g=S.g,q=g.q.trim().toUpperCase();
   return (S.data?S.data.clientes:[]).filter(c=>(!g.vend||c.v===g.vend)&&(!g.frec||c.f===g.frec)&&(!q||c.c.includes(q)||c.rs.toUpperCase().includes(q)));}
